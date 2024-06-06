@@ -21,7 +21,7 @@ func (h Handler) Login(c *gin.Context) {
 	}
 
 	// Prepare the SQL statement
-	stmt, err := h.db.Prepare("SELECT id, hashed_password FROM users WHERE user_id = ?")
+	stmt, err := h.db.Prepare("SELECT id, password_hash FROM users WHERE user_id = $1")
 	if err != nil {
 		// handle error
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})

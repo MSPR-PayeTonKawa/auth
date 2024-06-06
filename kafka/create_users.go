@@ -19,6 +19,8 @@ func ListenToCreateUserEvents() {
 
 	c.SubscribeTopics([]string{"user_creation_topic"}, nil)
 
+	defer c.Close()
+
 	for {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
@@ -30,6 +32,4 @@ func ListenToCreateUserEvents() {
 			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
 		}
 	}
-
-	c.Close()
 }

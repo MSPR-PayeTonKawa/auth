@@ -8,7 +8,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JwtKey = os.Getenv("JWT_KEY")
+var JwtKey = []byte(os.Getenv("JWT_KEY"))
 
 func CreateToken(userID string) (*types.TokenDetails, error) {
 	td := &types.TokenDetails{}

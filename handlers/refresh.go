@@ -30,7 +30,7 @@ func (h Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	if time.Until(time.Unix(expirationTime.Unix(), 0)) > 30*time.Second {
+	if time.Until(time.Unix(expirationTime.Unix(), 0)) < 30*time.Second {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
 		return
 	}
