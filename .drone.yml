@@ -20,7 +20,7 @@ steps:
   - name: test
     image: golang
     commands:
-      - go test
+      - go test ./... -v
 
   - name: docker
     image: plugins/docker
