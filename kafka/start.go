@@ -8,8 +8,8 @@ import (
 
 func StartConsumer(brokers string, groupId string, topics []string, processMessage func(*kafka.Message)) {
 	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  brokers,
-		"group.id":           groupId,
+		"bootstrap.servers":  "localhost:29092", // Changed from `kafka:9092` to `localhost:29092`
+		"group.id":           "yourGroupId",
 		"auto.offset.reset":  "earliest",
 		"enable.auto.commit": false,
 	})

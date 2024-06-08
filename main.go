@@ -1,9 +1,11 @@
 package main
 
 import (
-	kafka "github.com/MSPR-PayeTonKawa/auth/kafka"
 	"log"
 	"net/http"
+	"os"
+
+	kafka "github.com/MSPR-PayeTonKawa/auth/kafka"
 
 	"github.com/MSPR-PayeTonKawa/auth/database"
 	"github.com/MSPR-PayeTonKawa/auth/handlers"
@@ -42,8 +44,10 @@ func main() {
 	r.POST("/refresh", h.Refresh)
 	r.POST("/verify", h.VerifyToken)
 
+	port := os.Getenv("PORT")
+
 	// Start the server
-	if err := r.Run(); err != nil {
+	if err := r.Run(":" + port); err != nil {
 		log.Fatal(err)
 	}
 }

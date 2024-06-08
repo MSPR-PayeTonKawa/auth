@@ -12,7 +12,7 @@ import (
 
 func ProcessMessage(msg *kafka.Message) {
 	var user struct {
-		UserID   string `json:"user_id"`
+		UserID   int    `json:"user_id"`
 		Password string `json:"password"`
 	}
 
@@ -33,7 +33,7 @@ func ProcessMessage(msg *kafka.Message) {
 	}
 }
 
-func storeUser(db *sql.DB, userID, password string) error {
+func storeUser(db *sql.DB, userID int, password string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
