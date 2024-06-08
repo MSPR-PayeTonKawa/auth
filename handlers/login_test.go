@@ -27,7 +27,7 @@ func TestLogin(t *testing.T) {
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte("pass123"), bcrypt.DefaultCost)
 	rows := sqlmock.NewRows([]string{"user_id", "password_hash"}).AddRow("user1", string(passwordHash))
 
-	mock.ExpectPrepare("SELECT id, password_hash FROM users WHERE user_id = \\$1").
+	mock.ExpectPrepare("SELECT user_id, password_hash FROM users WHERE user_id = \\$1").
 		ExpectQuery().
 		WithArgs("user1").
 		WillReturnRows(rows)

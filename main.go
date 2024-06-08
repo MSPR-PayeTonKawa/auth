@@ -1,12 +1,12 @@
 package main
 
 import (
+	kafka "github.com/MSPR-PayeTonKawa/auth/kafka"
 	"log"
 	"net/http"
 
 	"github.com/MSPR-PayeTonKawa/auth/database"
 	"github.com/MSPR-PayeTonKawa/auth/handlers"
-	"github.com/MSPR-PayeTonKawa/auth/kafka"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -24,6 +24,8 @@ func main() {
 	}
 	defer db.Close()
 
+	go kafka.StartConsumer("localhost:9092", "user-group", []string{"user-topic"}, kafka.ProcessMessage)
+
 	// Set up Gin router
 	r := gin.Default()
 
@@ -39,8 +41,6 @@ func main() {
 	r.POST("/login", h.Login)
 	r.POST("/refresh", h.Refresh)
 	r.POST("/verify", h.VerifyToken)
-
-	go kafka.ListenToCreateUserEvents()
 
 	// Start the server
 	if err := r.Run(); err != nil {
