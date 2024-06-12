@@ -1,0 +1,11 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: auth-forward
+  namespace: payetonkawa-prod
+spec:
+  forwardAuth:
+    address: http://auth-service.payetonkawa-prod.svc.cluster.local/verify
+    trustForwardHeader: true
+    authResponseHeaders:
+      - "X-User"
