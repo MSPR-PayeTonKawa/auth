@@ -26,6 +26,8 @@ spec:
           value: "production"
         - name: DB_HOST
           value: "postgres-auth-service.payetonkawa-prod.svc.cluster.local"
+        - name: KAFKA_HOST
+          value: "kafka-controller-headless.payetonkawa-prod.svc.cluster.local"
         resources:
           limits:
             cpu: "1"
