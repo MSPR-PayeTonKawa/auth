@@ -23,7 +23,7 @@ func (h Handler) Login(c *gin.Context) {
 	}
 
 	// Prepare the SQL statement
-	stmt, err := h.db.Prepare("SELECT user_id, password_hash FROM users WHERE user_id = $1")
+	stmt, err := h.db.PrepareContext(c, "SELECT user_id, email, password_hash FROM users WHERE email = $1")
 	if err != nil {
 		log.Println("Error preparing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -32,7 +32,7 @@ func (h Handler) Login(c *gin.Context) {
 	defer stmt.Close()
 
 	// Execute the statement
-	rows, err := stmt.Query(creds.UserID)
+	rows, err := stmt.Query(creds.Email)
 	if err != nil {
 		log.Println("Error executing SQL statement:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -42,14 +42,14 @@ func (h Handler) Login(c *gin.Context) {
 
 	// Check if a user was found
 	if !rows.Next() {
-		log.Println("User not found:", creds.UserID)
+		log.Println("User not found:", creds.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "login failed"})
 		return
 	}
 
 	// Scan the result into a UserCredentials object
 	var user types.UserCredentials
-	err = rows.Scan(&user.UserID, &user.Password)
+	err = rows.Scan(&user.UserID, &user.Email, &user.Password)
 	if err != nil {
 		log.Println("Error scanning rows:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
@@ -58,12 +58,12 @@ func (h Handler) Login(c *gin.Context) {
 
 	// Check if user exists and password is correct
 	if user.UserID == "" || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)) != nil {
-		log.Println("Invalid credentials for user:", creds.UserID)
+		log.Println("Invalid credentials for user:", creds.Email)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "login failed"})
 		return
 	}
 
-	tokens, err := tokens.CreateToken(creds.UserID)
+	tokens, err := tokens.CreateToken(user.UserID, user.Email)
 	if err != nil {
 		log.Println("Error creating tokens:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create tokens"})

@@ -11,5 +11,6 @@ type TokenDetails struct {
 
 type Claims struct {
 	UserID string `json:"user_id"`
-	jwt.Claims
+	Email  string `json:"email"`
+	jwt.RegisteredClaims
 }

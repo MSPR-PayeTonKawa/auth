@@ -1,8 +1,8 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
-	"time"
 
 	"github.com/MSPR-PayeTonKawa/auth/tokens"
 	"github.com/MSPR-PayeTonKawa/auth/types"
@@ -15,31 +15,35 @@ func (h Handler) Refresh(c *gin.Context) {
 		RefreshToken string `json:"refresh_token"`
 	}
 	if err := c.ShouldBindJSON(&creds); err != nil {
+		log.Printf("Error binding JSON: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad request"})
 		return
 	}
 
+	log.Printf("Received refresh token: %s", creds.RefreshToken)
+
 	claims := &types.Claims{}
-	_, _ = jwt.ParseWithClaims(creds.RefreshToken, claims, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(creds.RefreshToken, claims, func(token *jwt.Token) (interface{}, error) {
 		return tokens.JwtKey, nil
 	})
 
-	expirationTime, err := claims.Claims.GetExpirationTime()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not get expiration time"})
-		return
-	}
-
-	if time.Until(time.Unix(expirationTime.Unix(), 0)) < 30*time.Second {
+	if err != nil || !token.Valid {
+		log.Printf("Error parsing token with claims: %v", err)
+		log.Printf("Token valid: %v", token.Valid)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired refresh token"})
 		return
 	}
 
-	tokens, err := tokens.CreateToken(claims.UserID)
+	log.Printf("Parsed claims: %+v", claims)
+
+	tokens, err := tokens.CreateToken(claims.UserID, claims.Email)
 	if err != nil {
+		log.Printf("Error creating tokens: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create tokens"})
 		return
 	}
+
+	log.Printf("Created tokens: %+v", tokens)
 
 	c.JSON(http.StatusOK, gin.H{"access_token": tokens.AccessToken, "refresh_token": tokens.RefreshToken})
 }

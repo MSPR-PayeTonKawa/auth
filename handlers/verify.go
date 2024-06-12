@@ -28,5 +28,5 @@ func (h Handler) VerifyToken(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user_id": claims.UserID})
+	c.JSON(http.StatusOK, gin.H{"user_id": claims.UserID, "email": claims.Email})
 }

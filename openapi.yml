@@ -1,52 +1,38 @@
-openapi: 3.0.0
+openapi: 3.0.1
 info:
-  title: Authentication Service API
-  description: This API handles user authentication, token refresh, and token verification.
-  version: 1.0.0
+  title: Authentication Service
+  description: This service handles user authentication including login, token refresh, and token verification.
+  version: "1.0.0"
 servers:
-  - url: http://localhost:8080
-    description: Development server
+  - url: 'http://localhost:8080/'
 paths:
   /login:
     post:
-      summary: Authenticate user and receive JWT
+      summary: User login
+      description: Authenticates a user and returns access and refresh tokens.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - user_id
-                - password
-              properties:
-                user_id:
-                  type: string
-                  example: user1
-                password:
-                  type: string
-                  example: pass123
+              $ref: '#/components/schemas/UserCredentials'
       responses:
-        200:
-          description: Successfully authenticated and tokens returned
+        '200':
+          description: Successful login
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  refresh_token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        401:
-          description: Authentication failed
-        400:
-          description: Bad request parameters
+                $ref: '#/components/schemas/TokenDetails'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
   /refresh:
     post:
-      summary: Refresh access token using a refresh token
+      summary: Refresh access token
+      description: Refreshes access and refresh tokens using a valid refresh token.
       requestBody:
         required: true
         content:
@@ -58,28 +44,23 @@ paths:
               properties:
                 refresh_token:
                   type: string
-                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       responses:
-        200:
-          description: Successfully refreshed and new tokens returned
+        '200':
+          description: Tokens refreshed successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  access_token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  refresh_token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        401:
-          description: Invalid or expired refresh token
-        400:
-          description: Bad request parameters
+                $ref: '#/components/schemas/TokenDetails'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal server error
   /verify:
     post:
-      summary: Verify access token and return user ID
+      summary: Verify access token
+      description: Verifies the validity of an access token and returns the user ID.
       requestBody:
         required: true
         content:
@@ -91,10 +72,9 @@ paths:
               properties:
                 access_token:
                   type: string
-                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
       responses:
-        200:
-          description: Token is valid
+        '200':
+          description: Access token is valid
           content:
             application/json:
               schema:
@@ -102,12 +82,35 @@ paths:
                 properties:
                   user_id:
                     type: string
-                    example: "user1"
-        401:
-          description: Invalid or expired access token
-        400:
-          description: Bad request parameters
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
 components:
+  schemas:
+    UserCredentials:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+    TokenDetails:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        at_expires:
+          type: integer
+          format: int64
+        rt_expires:
+          type: integer
+          format: int64
   securitySchemes:
     bearerAuth:
       type: http

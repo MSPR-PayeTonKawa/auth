@@ -7,13 +7,13 @@ import (
 
 	"github.com/MSPR-PayeTonKawa/auth/database"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func ProcessMessage(msg *kafka.Message) {
 	var user struct {
 		UserID   int    `json:"user_id"`
-		Password string `json:"password"`
+		Email    string `json:"email"`
+		Password string `json:"hashed_password"`
 	}
 
 	if err := json.Unmarshal(msg.Value, &user); err != nil {
@@ -28,17 +28,15 @@ func ProcessMessage(msg *kafka.Message) {
 	}
 	defer db.Close()
 
-	if err := storeUser(db, user.UserID, user.Password); err != nil {
+	if err := storeUser(db, user.UserID, user.Email, user.Password); err != nil {
 		log.Printf("Error storing user data: %s", err)
 	}
 }
 
-func storeUser(db *sql.DB, userID int, password string) error {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
+func storeUser(db *sql.DB, userID int, userEmail string, password string) error {
+	_, err := db.Exec("INSERT INTO users (user_id, email, password_hash) VALUES ($1, $2, $3)", userID, userEmail, password)
+	if err == nil {
+		log.Printf("User with ID %d and email %s created successfully", userID, userEmail)
 	}
-
-	_, err = db.Exec("INSERT INTO users (user_id, password_hash) VALUES ($1, $2)", userID, string(hashedPassword))
 	return err
 }
