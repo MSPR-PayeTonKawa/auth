@@ -20,3 +20,13 @@ spec:
         envFrom:
         - secretRef:
             name: auth-secrets
+        env:
+        - name: ENV
+          value: "production"
+        resources:
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
