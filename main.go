@@ -29,7 +29,14 @@ func main() {
 	}
 	defer db.Close()
 
-	go kafka.StartConsumer("localhost:9092", "user-group", []string{"user-topic"}, kafka.ProcessMessage)
+	var kafkaBrokers string
+	if env == "production" {
+		kafkaBrokers = "kafka:9092"
+	} else {
+		kafkaBrokers = "localhost:9092"
+	}
+
+	go kafka.StartConsumer(kafkaBrokers, "user-group", []string{"user-topic"}, kafka.ProcessMessage)
 
 	// Set up Gin router
 	r := gin.Default()

@@ -1,31 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-deployment
+  name: postgres-deployment
   namespace: payetonkawa-prod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-service
+      app: postgres
   template:
     metadata:
       labels:
-        app: auth-service
+        app: postgres
     spec:
       containers:
-      - name: auth-container
-        image: registry.germainleignel.com/paye-ton-kawa/auth:latest
+      - name: postgres
+        image: postgres:latest
         ports:
-        - containerPort: 8081
+        - containerPort: 5432
         envFrom:
         - secretRef:
             name: auth-secrets
-        env:
-        - name: ENV
-          value: "production"
-        - name: DB_HOST
-          value: "postgres-auth-service.payetonkawa-prod.svc.cluster.local"
         resources:
           limits:
             cpu: "1"
