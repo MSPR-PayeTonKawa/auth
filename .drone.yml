@@ -73,3 +73,22 @@ trigger:
 services:
   - name: docker
     image: docker:dind
+    privileged: true
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+      - name: modules
+        path: /lib/modules
+      - name: cgroups
+        path: /sys/fs/cgroup
+
+volumes:
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
+  - name: modules
+    host:
+      path: /lib/modules
+  - name: cgroups
+    host:
+      path: /sys/fs/cgroup
