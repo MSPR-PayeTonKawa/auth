@@ -1,35 +1,12 @@
 kind: pipeline
 type: kubernetes
-name: Authentification
+name: GestionCommandes
 
 platform:
   os: linux
   arch: amd64
 
 steps:
-  - name: deploy
-    image: alpine/k8s:1.20.2
-    environment:
-      KUBERNETES_SERVER:
-        from_secret: kubernetes_server
-      KUBERNETES_CERTIFICATE_AUTHORITY:
-        from_secret: kubernetes_certificate_authority
-      KUBERNETES_CLIENT_CERTIFICATE:
-        from_secret: kubernetes_client_certificate
-      KUBERNETES_CLIENT_KEY:
-        from_secret: kubernetes_client_key
-    commands:
-      - echo $KUBERNETES_CERTIFICATE_AUTHORITY > /tmp/ca.crt
-      - echo $KUBERNETES_CLIENT_CERTIFICATE > /tmp/client.crt
-      - echo $KUBERNETES_CLIENT_KEY > /tmp/client.key
-      - kubectl config set-cluster default-cluster --server=$KUBERNETES_SERVER --certificate-authority=/tmp/ca.crt
-      - kubectl config set-credentials default-admin --client-certificate=/tmp/client.crt --client-key=/tmp/client.key
-      - kubectl config set-context default-context --cluster=default-cluster --user=default-admin
-      - kubectl config use-context default-context
-      - helm repo add my-charts https://chartmuseum.germainleignel.com/
-      - helm repo update
-      - helm upgrade --install payetonkawa-staging my-charts/payetonkawa-chart -f ./k8s/values-staging.yaml --namespace payetonkawa-staging
-
   - name: sonarqube
     image: sonarsource/sonar-scanner-cli
     environment:
@@ -45,21 +22,28 @@ steps:
     commands:
       - go test ./... -v
 
-  - name: build-docker
-    image: gcr.io/kaniko-project/executor:latest
-    environment:
-      REGISTRY_USERNAME:
+  - name: docker
+    image: plugins/docker
+    settings:
+      username:
         from_secret: harbor_username
-      REGISTRY_PASSWORD:
+      password:
         from_secret: harbor_password
-    volumes:
-      - name: kaniko-secret
-        path: /kaniko/.docker
-    commands:
-      - echo "{\"auths\":{\"registry.germainleignel.com\":{\"username\":\"$REGISTRY_USERNAME\",\"password\":\"$REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-      - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination registry.germainleignel.com/paye-ton-kawa/auth
+      repo: registry.germainleignel.com/paye-ton-kawa/auth
+      registry: registry.germainleignel.com
 
-  - name: msg-status
+  - name: deploy
+    image: registry.germainleignel.com/paye-ton-kawa/deploy
+    environment:
+      HELM_RELEASE_NAME: payetonkawa-auth
+      CHART_DIR: /k8s
+    volumes:
+      - name: k8s
+        path: /k8s
+    commands:
+      - deploy.sh
+
+  - name: msg status
     image: appleboy/drone-discord
     settings:
       webhook_id:
@@ -75,5 +59,6 @@ trigger:
     - main
 
 volumes:
-  - name: kaniko-secret
-    temp: {}
+  - name: k8s
+    host:
+      path: ./k8s
