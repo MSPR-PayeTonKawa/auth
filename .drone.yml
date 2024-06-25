@@ -46,14 +46,18 @@ steps:
       - go test ./... -v
 
   - name: build-docker
-    image: plugins/docker
-    settings:
-      username:
+    image: gcr.io/kaniko-project/executor:latest
+    environment:
+      REGISTRY_USERNAME:
         from_secret: harbor_username
-      password:
+      REGISTRY_PASSWORD:
         from_secret: harbor_password
-      repo: registry.germainleignel.com/paye-ton-kawa/auth
-      registry: registry.germainleignel.com
+    volumes:
+      - name: kaniko-secret
+        path: /kaniko/.docker
+    commands:
+      - echo "{\"auths\":{\"registry.germainleignel.com\":{\"username\":\"$REGISTRY_USERNAME\",\"password\":\"$REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+      - /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/Dockerfile --destination registry.germainleignel.com/paye-ton-kawa/auth
 
   - name: msg-status
     image: appleboy/drone-discord
@@ -70,25 +74,6 @@ trigger:
   branch:
     - main
 
-services:
-  - name: docker
-    image: docker:dind
-    privileged: true
-    volumes:
-      - name: dockersock
-        path: /var/run/docker.sock
-      - name: modules
-        path: /lib/modules
-      - name: cgroups
-        path: /sys/fs/cgroup
-
 volumes:
-  - name: dockersock
-    host:
-      path: /var/run/docker.sock
-  - name: modules
-    host:
-      path: /lib/modules
-  - name: cgroups
-    host:
-      path: /sys/fs/cgroup
+  - name: kaniko-secret
+    temp: {}
