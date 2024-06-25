@@ -1,0 +1,14 @@
+namespace: payetonkawa-staging
+
+auth:
+  image: registry.germainleignel.com/paye-ton-kawa/auth:latest
+  env:
+    ENV: "staging"
+    DB_HOST: "postgres-auth-service.{{ .Values.namespace }}.svc.cluster.local"
+    KAFKA_HOST: "kafka-controller-headless.{{ .Values.namespace }}.svc.cluster.local"
+
+postgres:
+  image: postgres:latest
+
+ingress:
+  host: payetonkawa-staging.germainleignel.com

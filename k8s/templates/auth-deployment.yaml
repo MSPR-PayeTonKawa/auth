@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-deployment
-  namespace: payetonkawa-prod
+  namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: auth-container
-        image: registry.germainleignel.com/paye-ton-kawa/auth:latest
+        image: {{ .Values.auth.image }}
         ports:
         - containerPort: 8081
         envFrom:
@@ -23,11 +23,11 @@ spec:
             name: auth-secrets
         env:
         - name: ENV
-          value: "production"
+          value: {{ .Values.auth.env.ENV }}
         - name: DB_HOST
-          value: "postgres-auth-service.payetonkawa-prod.svc.cluster.local"
+          value: {{ .Values.auth.env.DB_HOST }}
         - name: KAFKA_HOST
-          value: "kafka-controller-headless.payetonkawa-prod.svc.cluster.local"
+          value: {{ .Values.auth.env.KAFKA_HOST }}
         resources:
           limits:
             cpu: "1"
