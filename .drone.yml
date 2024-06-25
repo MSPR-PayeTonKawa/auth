@@ -7,6 +7,29 @@ platform:
   arch: amd64
 
 steps:
+  - name: deploy
+    image: alpine/k8s:1.20.2
+    environment:
+      KUBERNETES_SERVER:
+        from_secret: kubernetes_server
+      KUBERNETES_CERTIFICATE_AUTHORITY:
+        from_secret: kubernetes_certificate_authority
+      KUBERNETES_CLIENT_CERTIFICATE:
+        from_secret: kubernetes_client_certificate
+      KUBERNETES_CLIENT_KEY:
+        from_secret: kubernetes_client_key
+    commands:
+      - echo $KUBERNETES_CERTIFICATE_AUTHORITY > /tmp/ca.crt
+      - echo $KUBERNETES_CLIENT_CERTIFICATE > /tmp/client.crt
+      - echo $KUBERNETES_CLIENT_KEY > /tmp/client.key
+      - kubectl config set-cluster default-cluster --server=$KUBERNETES_SERVER --certificate-authority=/tmp/ca.crt
+      - kubectl config set-credentials default-admin --client-certificate=/tmp/client.crt --client-key=/tmp/client.key
+      - kubectl config set-context default-context --cluster=default-cluster --user=default-admin
+      - kubectl config use-context default-context
+      - helm repo add my-charts https://chartmuseum.germainleignel.com/
+      - helm repo update
+      - helm upgrade --install payetonkawa-staging my-charts/payetonkawa-chart -f ./k8s/values-staging.yaml --namespace payetonkawa-staging
+
   - name: sonarqube
     image: sonarsource/sonar-scanner-cli
     environment:
@@ -46,3 +69,8 @@ steps:
 trigger:
   branch:
     - main
+
+
+services:
+  - name: docker
+    image: docker:dind
