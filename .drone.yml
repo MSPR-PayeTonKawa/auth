@@ -45,7 +45,7 @@ steps:
     commands:
       - go test ./... -v
 
-  - name: docker
+  - name: build-docker
     image: plugins/docker
     settings:
       username:
@@ -55,7 +55,7 @@ steps:
       repo: registry.germainleignel.com/paye-ton-kawa/auth
       registry: registry.germainleignel.com
 
-  - name: msg status
+  - name: msg-status
     image: appleboy/drone-discord
     settings:
       webhook_id:
@@ -69,7 +69,6 @@ steps:
 trigger:
   branch:
     - main
-
 
 services:
   - name: docker
