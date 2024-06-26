@@ -10,46 +10,41 @@ pipeline {
 
     stages {
         stage('SonarQube Analysis') {
-            agent {
-                docker {
-                    image 'sonarsource/sonar-scanner-cli'
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh 'sonar-scanner -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN'
+                script {
+                    docker.image('sonarsource/sonar-scanner-cli').inside('-u root:root') {
+                        sh 'sonar-scanner -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN'
+                    }
+                }
             }
         }
 
         stage('Go Test') {
-            agent {
-                docker {
-                    image 'golang'
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh 'go test ./... -v'
+                script {
+                    docker.image('golang').inside('-u root:root') {
+                        sh 'go test ./... -v'
+                    }
+                }
             }
         }
 
         stage('Docker Build and Push') {
-            agent {
-                docker {
-                    image 'plugins/docker'
-                    args '-u root:root'
-                }
-            }
             steps {
-                sh '''
-                    docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD registry.germainleignel.com
-                    docker build -t registry.germainleignel.com/paye-ton-kawa/auth .
-                    docker push registry.germainleignel.com/paye-ton-kawa/auth
-                '''
+                script {
+                    docker.image('plugins/docker').inside('-u root:root') {
+                        sh '''
+                            docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD registry.germainleignel.com
+                            docker build -t registry.germainleignel.com/paye-ton-kawa/auth .
+                            docker push registry.germainleignel.com/paye-ton-kawa/auth
+                        '''
+                    }
+                }
             }
         }
     }
+
     triggers {
-        githubPush(branch: 'main')
+        pollSCM('* * * * *') // Poll SCM for changes every minute
     }
 }
