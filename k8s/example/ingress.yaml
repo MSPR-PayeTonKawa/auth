@@ -1,0 +1,15 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: secure-route
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`your-service.example.com`) && PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: your-service
+          port: 80
+      middlewares:
+        - name: auth-forward
