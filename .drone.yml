@@ -36,10 +36,7 @@ steps:
     image: registry.germainleignel.com/paye-ton-kawa/deploy
     environment:
       HELM_RELEASE_NAME: payetonkawa-auth
-      CHART_DIR: /k8s
-    volumes:
-      - name: k8s
-        path: /k8s
+      CHART_DIR: ./k8s
     commands:
       - deploy.sh
 
@@ -57,8 +54,3 @@ steps:
 trigger:
   branch:
     - main
-
-volumes:
-  - name: k8s
-    host:
-      path: ./k8s
