@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = credentials('sonar_host')
-        SONAR_TOKEN = credentials('sonar_token')
-        HARBOR_USERNAME = credentials('harbor_username')
-        HARBOR_PASSWORD = credentials('harbor_password')
+        SONAR_HOST_URL = credentials('SONAR_HOST')
+        SONAR_TOKEN = credentials('SONAR_TOKEN')
+        HARBOR_USERNAME = credentials('HARBOR_USERNAME')
+        HARBOR_PASSWORD = credentials('HARBOR_PASSWORD')
     }
 
     stages {
