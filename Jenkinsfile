@@ -49,8 +49,7 @@ pipeline {
             }
         }
     }
-
     triggers {
-        githubPush()
+        githubPush(branch: 'main')
     }
 }
