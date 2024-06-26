@@ -12,7 +12,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    docker.image('sonarsource/sonar-scanner-cli').inside('-u root:root') {
+                    withDockerContainer(args: '-u root:root', image: 'sonarsource/sonar-scanner-cli') {
                         sh 'sonar-scanner -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN'
                     }
                 }
@@ -22,7 +22,7 @@ pipeline {
         stage('Go Test') {
             steps {
                 script {
-                    docker.image('golang').inside('-u root:root') {
+                    withDockerContainer(args: '-u root:root', image: 'golang') {
                         sh 'go test ./... -v'
                     }
                 }
@@ -32,7 +32,7 @@ pipeline {
         stage('Docker Build and Push') {
             steps {
                 script {
-                    docker.image('plugins/docker').inside('-u root:root') {
+                    withDockerContainer(args: '-u root:root', image: 'plugins/docker') {
                         sh '''
                             docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD registry.germainleignel.com
                             docker build -t registry.germainleignel.com/paye-ton-kawa/auth .
