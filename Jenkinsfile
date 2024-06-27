@@ -8,7 +8,7 @@ pipeline {
             spec:
               containers:
               - name: go
-                image: golang:1.19
+                image: golang:1.22
                 command:
                 - cat
                 tty: true
