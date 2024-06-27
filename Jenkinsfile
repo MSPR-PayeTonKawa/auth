@@ -1,7 +1,7 @@
 pipeline {
     agent {
         kubernetes {
-            label 'go-test-pod'
+            label 'go-docker-agent'
             yaml """
             apiVersion: v1
             kind: Pod
@@ -9,20 +9,21 @@ pipeline {
               containers:
               - name: go
                 image: golang:1.22
-                command: ["cat"]
+                command:
+                - cat
                 tty: true
               - name: docker
                 image: docker:20.10.7
-                command: ["cat"]
+                command:
+                - cat
                 tty: true
-              - name: sonar-scanner
-                image: sonarsource/sonar-scanner-cli
-                command: ["cat"]
-                tty: true
-              - name: kubectl
-                image: bitnami/kubectl:latest
-                command: ["cat"]
-                tty: true
+                volumeMounts:
+                - name: docker-sock
+                  mountPath: /var/run/docker.sock
+              volumes:
+              - name: docker-sock
+                hostPath:
+                  path: /var/run/docker.sock
             """
         }
     }
@@ -32,13 +33,13 @@ pipeline {
         SONAR_TOKEN = credentials('9c1c3109-58e4-4890-b88f-2615d2221245') // SONAR_TOKEN
         HARBOR_USERNAME = credentials('db2c5c66-275f-440f-a0d5-73dce0f7355e') // HARBOR_USERNAME
         HARBOR_PASSWORD = credentials('a6c7d1c9-3c1b-4bdb-a0c5-4ca28f51c1f5') // HARBOR_PASSWORD
-        KUBECONFIG_CONTENT = credentials('ec2c0a90-1f2e-461e-8851-5add47e2c7b2') // Kubeconfig secret
     }
 
     stages {
         stage('Test') {
             steps {
                 container('go') {
+                    // Running go test with verbosity
                     sh 'go test ./... -v'
                 }
             }
@@ -48,7 +49,8 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        sh 'docker build -t registry.germainleignel.com/paye-ton-kawa/auth:latest .'
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh "docker build -t ${imageName} ."
                     }
                 }
             }
@@ -58,29 +60,9 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
-                        sh 'docker push registry.germainleignel.com/paye-ton-kawa/auth:latest'
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                container('sonar-scanner') {
-                    sh 'sonar-scanner -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN'
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                container('kubectl') {
-                    script {
-                        // Save the KUBECONFIG file to the correct location
-                        sh 'mkdir -p /root/.kube && echo "$KUBECONFIG_CONTENT" > /root/.kube/config'
-                        // Apply the YAML files to the cluster
-                        sh 'kubectl apply -f ./k8s/*.yaml --kubeconfig=/root/.kube/config'
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh "echo ${env.HARBOR_PASSWORD} | docker login registry.germainleignel.com --username ${env.HARBOR_USERNAME} --password-stdin"
+                        sh "docker push ${imageName}"
                     }
                 }
             }
@@ -89,13 +71,14 @@ pipeline {
 
     post {
         always {
+            // Archive test results, logs, or any other artifacts if needed
             archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
         }
         success {
-            echo 'Tests ran successfully, SonarQube analysis completed, and image was built, pushed, and deployed.'
+            echo 'Tests ran successfully and image was built and pushed.'
         }
         failure {
-            echo 'Tests, SonarQube analysis, Docker build/push, or deployment failed.'
+            echo 'Tests or Docker build/push failed.'
         }
     }
 }
