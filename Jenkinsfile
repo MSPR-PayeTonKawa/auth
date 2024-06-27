@@ -9,17 +9,6 @@ pipeline {
     }
 
     stages {
-        stage('Test Credentials') {
-            steps {
-                script {
-                    echo "SONAR_HOST_URL: ${env.SONAR_HOST_URL}"
-                    echo "SONAR_TOKEN: ${env.SONAR_TOKEN}"
-                    echo "HARBOR_USERNAME: ${env.HARBOR_USERNAME}"
-                    echo "HARBOR_PASSWORD: ${env.HARBOR_PASSWORD}"
-                }
-            }
-        }
-        
         stage('SonarQube Analysis') {
             steps {
                 script {
