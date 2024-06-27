@@ -1,19 +1,53 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            label 'go-test-pod'
+            yaml """
+            apiVersion: v1
+            kind: Pod
+            spec:
+              containers:
+              - name: go
+                image: golang:1.19
+                command:
+                - cat
+                tty: true
+              - name: busybox
+                image: busybox
+                command:
+                - cat
+                tty: true
+            """
+        }
+    }
 
     stages {
-        stage('Go Test') {
+        stage('Checkout') {
             steps {
-                script {
-                    withDockerContainer(args: '-u root:root', image: 'golang') { // Requires Docker Pipeline plugin
-                        sh 'go test ./... -v'
-                    }
+                // Checkout the source code from the repository
+                git branch: 'main', url: 'git@github.com:MSPR-PayeTonKawa/auth.git'
+            }
+        }
+        stage('Test') {
+            steps {
+                container('go') {
+                    // Running go test with verbosity
+                    sh 'go test ./... -v'
                 }
             }
         }
     }
 
-    triggers {
-        pollSCM('* * * * *') // Poll SCM for changes every minute // Requires Git plugin
+    post {
+        always {
+            // Archive test results, logs, or any other artifacts if needed
+            archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
+        }
+        success {
+            echo 'Tests ran successfully.'
+        }
+        failure {
+            echo 'Tests failed.'
+        }
     }
 }
