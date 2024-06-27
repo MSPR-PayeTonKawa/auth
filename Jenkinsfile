@@ -20,6 +20,11 @@ pipeline {
                 volumeMounts:
                 - name: docker-sock
                   mountPath: /var/run/docker.sock
+              - name: sonar-scanner
+                image: sonarsource/sonar-scanner-cli
+                command:
+                - cat
+                tty: true
               volumes:
               - name: docker-sock
                 hostPath:
@@ -65,6 +70,14 @@ pipeline {
                 }
             }
         }
+
+        stage('SonarQube Analysis') {
+            steps {
+                container('sonar-scanner') {
+                    sh 'sonar-scanner -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN'
+                }
+            }
+        }
     }
 
     post {
@@ -73,10 +86,10 @@ pipeline {
             archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
         }
         success {
-            echo 'Tests ran successfully and image was built and pushed.'
+            echo 'Tests ran successfully, SonarQube analysis completed, and image was built and pushed.'
         }
         failure {
-            echo 'Tests or Docker build/push failed.'
+            echo 'Tests, SonarQube analysis, or Docker build/push failed.'
         }
     }
 }
