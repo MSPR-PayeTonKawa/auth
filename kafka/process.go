@@ -6,10 +6,11 @@ import (
 	"log"
 
 	"github.com/MSPR-PayeTonKawa/auth/database"
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/segmentio/kafka-go"
 )
 
-func ProcessMessage(msg *kafka.Message) {
+// ProcessMessage processes the Kafka message
+func ProcessMessage(msg kafka.Message) {
 	var user struct {
 		UserID   int    `json:"user_id"`
 		Email    string `json:"email"`
@@ -33,6 +34,7 @@ func ProcessMessage(msg *kafka.Message) {
 	}
 }
 
+// storeUser stores the user data in the database
 func storeUser(db *sql.DB, userID int, userEmail string, password string) error {
 	_, err := db.Exec("INSERT INTO users (user_id, email, password_hash) VALUES ($1, $2, $3)", userID, userEmail, password)
 	if err == nil {

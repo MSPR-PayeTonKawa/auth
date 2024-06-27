@@ -1,13 +1,16 @@
 package kafka
 
 import (
+	"context"
 	"log"
 	"os"
+	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
+	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 )
 
-func StartConsumer(brokers string, groupId string, topics []string, processMessage func(*kafka.Message)) {
+func StartConsumer(brokers string, groupId string, topics []string, processMessage func(kafka.Message)) {
 	username := os.Getenv("KAFKA_USERNAME")
 	password := os.Getenv("KAFKA_PASSWORD")
 
@@ -15,34 +18,39 @@ func StartConsumer(brokers string, groupId string, topics []string, processMessa
 		log.Fatal("Kafka username or password not set")
 	}
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":  brokers,
-		"group.id":           groupId,
-		"auto.offset.reset":  "earliest",
-		"enable.auto.commit": false,
-		"security.protocol":  "SASL_SSL", // or "SASL_PLAINTEXT" if SSL is not used
-		"sasl.mechanism":     "PLAIN",
-		"sasl.username":      username, // replace with your SASL username
-		"sasl.password":      password, // replace with your SASL password
+	mechanism := plain.Mechanism{
+		Username: username,
+		Password: password,
+	}
+
+	dialer := &kafka.Dialer{
+		Timeout:       10 * time.Second,
+		KeepAlive:     10 * time.Second,
+		SASLMechanism: mechanism,
+	}
+
+	r := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:                []string{brokers},
+		GroupID:                groupId,
+		Topic:                  topics[0],
+		MinBytes:               10e3, // 10KB
+		MaxBytes:               10e6, // 10MB
+		Dialer:                 dialer,
+		CommitInterval:         time.Second,
+		PartitionWatchInterval: time.Second,
 	})
 
-	if err != nil {
-		log.Fatalf("Failed to create consumer: %s", err)
-	}
-
-	err = c.SubscribeTopics(topics, nil)
-	if err != nil {
-		log.Fatalf("Failed to subscribe to topics: %s", err)
-	}
+	ctx := context.Background()
 
 	for {
-		msg, err := c.ReadMessage(-1)
-		if err == nil {
-			processMessage(msg)
-			c.CommitMessage(msg) // Commit the message after processing
-		} else {
-			// handle error
-			log.Printf("Consumer error: %v (%v)\n", err, msg)
+		msg, err := r.ReadMessage(ctx)
+		if err != nil {
+			log.Printf("Consumer error: %v\n", err)
+			continue
+		}
+		processMessage(msg)
+		if err := r.CommitMessages(ctx, msg); err != nil {
+			log.Printf("Failed to commit message: %v\n", err)
 		}
 	}
 }
