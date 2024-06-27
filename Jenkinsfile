@@ -22,12 +22,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                // Checkout the source code from the repository
-                git branch: 'main', url: 'git@github.com:MSPR-PayeTonKawa/auth.git'
-            }
-        }
         stage('Test') {
             steps {
                 container('go') {
