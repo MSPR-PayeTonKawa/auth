@@ -50,7 +50,7 @@ pipeline {
                 container('docker') {
                     script {
                         def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh "docker build -t ${imageName} ."
+                        sh 'docker build -t ${imageName} .'
                     }
                 }
             }
@@ -61,8 +61,8 @@ pipeline {
                 container('docker') {
                     script {
                         def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh "echo ${env.HARBOR_PASSWORD} | docker login registry.germainleignel.com --username ${env.HARBOR_USERNAME} --password-stdin"
-                        sh "docker push ${imageName}"
+                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+                        sh 'docker push ${imageName}'
                     }
                 }
             }
