@@ -97,7 +97,7 @@ pipeline {
                         // Save the KUBECONFIG file to the correct location
                         sh 'mkdir -p /root/.kube && echo "$KUBECONFIG" > /root/.kube/config'
                         // Apply the YAML files to the cluster
-                        sh 'kubectl apply -f path/to/your/yaml/files --kubeconfig=/root/.kube/config'
+                        sh 'kubectl apply -f ./k8s/*.yaml --kubeconfig=/root/.kube/config'
                     }
                 }
             }
