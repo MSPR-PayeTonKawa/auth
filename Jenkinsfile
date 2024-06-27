@@ -9,37 +9,20 @@ pipeline {
               containers:
               - name: go
                 image: golang:1.22
-                command:
-                - cat
+                command: ["cat"]
                 tty: true
               - name: docker
                 image: docker:20.10.7
-                command:
-                - cat
+                command: ["cat"]
                 tty: true
-                volumeMounts:
-                - name: docker-sock
-                  mountPath: /var/run/docker.sock
               - name: sonar-scanner
                 image: sonarsource/sonar-scanner-cli
-                command:
-                - cat
+                command: ["cat"]
                 tty: true
               - name: kubectl
                 image: bitnami/kubectl:latest
-                command:
-                - cat
+                command: ["cat"]
                 tty: true
-                volumeMounts:
-                - name: kubeconfig
-                  mountPath: /root/.kube
-              volumes:
-              - name: docker-sock
-                hostPath:
-                  path: /var/run/docker.sock
-              - name: kubeconfig
-                secret:
-                  secretName: kubeconfig
             """
         }
     }
@@ -49,7 +32,7 @@ pipeline {
         SONAR_TOKEN = credentials('9c1c3109-58e4-4890-b88f-2615d2221245') // SONAR_TOKEN
         HARBOR_USERNAME = credentials('db2c5c66-275f-440f-a0d5-73dce0f7355e') // HARBOR_USERNAME
         HARBOR_PASSWORD = credentials('a6c7d1c9-3c1b-4bdb-a0c5-4ca28f51c1f5') // HARBOR_PASSWORD
-        KUBECONFIG = credentials('ec2c0a90-1f2e-461e-8851-5add47e2c7b2') // Kubeconfig secret
+        KUBECONFIG_CONTENT = credentials('ec2c0a90-1f2e-461e-8851-5add47e2c7b2') // Kubeconfig secret
     }
 
     stages {
@@ -95,7 +78,7 @@ pipeline {
                 container('kubectl') {
                     script {
                         // Save the KUBECONFIG file to the correct location
-                        sh 'mkdir -p /root/.kube && echo "$KUBECONFIG" > /root/.kube/config'
+                        sh 'mkdir -p /root/.kube && echo "$KUBECONFIG_CONTENT" > /root/.kube/config'
                         // Apply the YAML files to the cluster
                         sh 'kubectl apply -f ./k8s/*.yaml --kubeconfig=/root/.kube/config'
                     }
