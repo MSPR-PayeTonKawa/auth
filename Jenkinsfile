@@ -25,10 +25,21 @@ pipeline {
                 command:
                 - cat
                 tty: true
+              - name: kubectl
+                image: bitnami/kubectl:latest
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - name: kubeconfig
+                  mountPath: /root/.kube
               volumes:
               - name: docker-sock
                 hostPath:
                   path: /var/run/docker.sock
+              - name: kubeconfig
+                secret:
+                  secretName: kubeconfig
             """
         }
     }
@@ -38,13 +49,13 @@ pipeline {
         SONAR_TOKEN = credentials('9c1c3109-58e4-4890-b88f-2615d2221245') // SONAR_TOKEN
         HARBOR_USERNAME = credentials('db2c5c66-275f-440f-a0d5-73dce0f7355e') // HARBOR_USERNAME
         HARBOR_PASSWORD = credentials('a6c7d1c9-3c1b-4bdb-a0c5-4ca28f51c1f5') // HARBOR_PASSWORD
+        KUBECONFIG = credentials('ec2c0a90-1f2e-461e-8851-5add47e2c7b2') // Kubeconfig secret
     }
 
     stages {
         stage('Test') {
             steps {
                 container('go') {
-                    // Running go test with verbosity
                     sh 'go test ./... -v'
                 }
             }
@@ -78,18 +89,30 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                container('kubectl') {
+                    script {
+                        // Save the KUBECONFIG file to the correct location
+                        sh 'mkdir -p /root/.kube && echo "$KUBECONFIG" > /root/.kube/config'
+                        // Apply the YAML files to the cluster
+                        sh 'kubectl apply -f path/to/your/yaml/files --kubeconfig=/root/.kube/config'
+                    }
+                }
+            }
+        }
     }
 
     post {
         always {
-            // Archive test results, logs, or any other artifacts if needed
             archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
         }
         success {
-            echo 'Tests ran successfully, SonarQube analysis completed, and image was built and pushed.'
+            echo 'Tests ran successfully, SonarQube analysis completed, and image was built, pushed, and deployed.'
         }
         failure {
-            echo 'Tests, SonarQube analysis, or Docker build/push failed.'
+            echo 'Tests, SonarQube analysis, Docker build/push, or deployment failed.'
         }
     }
 }
