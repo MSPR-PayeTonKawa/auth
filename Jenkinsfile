@@ -52,44 +52,32 @@ pipeline {
     }
 
     stages {
-        // stage('Test') {
-        //     steps {
-        //         container('go') {
-        //             // Running go test with verbosity
-        //             sh 'go test ./... -v'
-        //         }
-        //     }
-        // }
-
-        // stage('Build Docker Image') {
-        //     steps {
-        //         container('docker') {
-        //             script {
-        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-        //                 sh "docker build -t ${imageName} ."
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('Push Docker Image') {
-        //     steps {
-        //         container('docker') {
-        //             script {
-        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-        //                 // Corrected to prevent Groovy string interpolation
-        //                 sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
-        //                 sh "docker push ${imageName}"
-        //             }
-        //         }
-        //     }
-        // }
-
-        stage('Verify Kubernetes Configuration') {
+        stage('Test') {
             steps {
-                container('kubectl') {
+                container('go') {
+                    sh 'go test ./... -v'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                container('docker') {
                     script {
-                        sh 'kubectl config view && kubectl get nodes'
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh "docker build -t ${imageName} ."
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                container('docker') {
+                    script {
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+                        sh "docker push ${imageName}"
                     }
                 }
             }
@@ -98,10 +86,8 @@ pipeline {
         stage('Apply Kubernetes Manifests') {
             steps {
                 container('kubectl') {
-                    script {
-                        sh 'ls -l /root/.kube/config'
-                        sh 'cat /root/.kube/config'
-                        sh 'kubectl apply -f k8s/*.yaml'
+                    withKubeConfig([credentialsId: 'ec2c0a90-1f2e-461e-8851-5add2c2c7b2']) {
+                        sh 'kubectl apply -f ./k8s'
                     }
                 }
             }
@@ -110,7 +96,6 @@ pipeline {
 
     post {
         always {
-            // Archive test results, logs, or any other artifacts if needed
             archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
         }
         success {
