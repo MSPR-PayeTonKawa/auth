@@ -89,8 +89,7 @@ pipeline {
             steps {
                 container('kubectl') {
                     script {
-                        sh 'kubectl config view'
-                        sh 'kubectl get nodes'
+                        sh 'kubectl config view && kubectl get nodes'
                     }
                 }
             }
@@ -100,6 +99,8 @@ pipeline {
             steps {
                 container('kubectl') {
                     script {
+                        sh 'ls -l /root/.kube/config'
+                        sh 'cat /root/.kube/config'
                         sh 'kubectl apply -f k8s/*.yaml'
                     }
                 }
