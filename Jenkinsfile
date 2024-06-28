@@ -53,6 +53,20 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Debug Pod') {
+            steps {
+                container('kubectl') {
+                    sh 'echo "Current Kubernetes context:"'
+                    sh 'kubectl config current-context'
+                    sh 'echo "Current Kubernetes namespace:"'
+                    sh 'kubectl config view --minify --output "jsonpath={..namespace}"'
+                    sh 'echo "Current directory contents:"'
+                    sh 'ls -la'
+                    sh 'echo "KUBECONFIG environment variable:"'
+                    sh 'echo $KUBECONFIG'
+                }
+            }
+        }
         stage('Deploy App to Kubernetes') {
             steps {
                 container('kubectl') {
