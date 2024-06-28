@@ -56,7 +56,7 @@ pipeline {
         stage('Deploy App to Kubernetes') {
             steps {
                 container('kubectl') {
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    withCredentials([file(credentialsId: 'ec2c0a90-1f2e-461e-8851-5add47e2c7b2', variable: 'KUBECONFIG')]) {
                         sh 'kubectl apply -f ./k8s/deployment.yaml'
                         sh 'kubectl apply -f ./k8s/middleware.yaml'
                         sh 'kubectl apply -f ./k8s/postgres-deployment.yaml'
