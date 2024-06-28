@@ -20,10 +20,17 @@ pipeline {
                 volumeMounts:
                 - name: docker-sock
                   mountPath: /var/run/docker.sock
+                - name: kubeconfig
+                  mountPath: /root/.kube/config
+                  subPath: config
+              serviceAccountName: jenkins-agent-sa
               volumes:
               - name: docker-sock
                 hostPath:
                   path: /var/run/docker.sock
+              - name: kubeconfig
+                configMap:
+                  name: kubeconfig
             """
         }
     }
@@ -36,6 +43,44 @@ pipeline {
     }
 
     stages {
+        stage('Setup RBAC') {
+            steps {
+                script {
+                    sh '''
+                    kubectl apply -f - <<EOF
+                    apiVersion: v1
+                    kind: ServiceAccount
+                    metadata:
+                      name: jenkins-agent-sa
+                      namespace: default
+                    ---
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: ClusterRole
+                    metadata:
+                      name: node-listing-role
+                    rules:
+                    - apiGroups: [""]
+                      resources: ["nodes"]
+                      verbs: ["get", "list", "watch"]
+                    ---
+                    apiVersion: rbac.authorization.k8s.io/v1
+                    kind: ClusterRoleBinding
+                    metadata:
+                      name: jenkins-agent-sa-cluster-admin
+                    subjects:
+                    - kind: ServiceAccount
+                      name: jenkins-agent-sa
+                      namespace: default
+                    roleRef:
+                      kind: ClusterRole
+                      name: cluster-admin
+                      apiGroup: rbac.authorization.k8s.io
+                    EOF
+                    '''
+                }
+            }
+        }
+
         stage('Test') {
             steps {
                 container('go') {
@@ -68,6 +113,16 @@ pipeline {
                 }
             }
         }
+
+        stage('Apply Kubernetes Manifests') {
+            steps {
+                container('docker') {
+                    script {
+                        sh 'kubectl apply -f your-manifest-file.yaml'
+                    }
+                }
+            }
+        }
     }
 
     post {
@@ -76,10 +131,10 @@ pipeline {
             archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
         }
         success {
-            echo 'Tests ran successfully and image was built and pushed.'
+            echo 'Tests ran successfully, image was built and pushed, and manifests were applied.'
         }
         failure {
-            echo 'Tests or Docker build/push failed.'
+            echo 'Tests, Docker build/push, or manifest application failed.'
         }
     }
 }
