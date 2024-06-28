@@ -80,7 +80,7 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        sh 'kubectl apply -f your-manifest-file.yaml'
+                        sh 'kubectl apply -f k8s/*.yaml'
                     }
                 }
             }
