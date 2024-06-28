@@ -43,44 +43,6 @@ pipeline {
     }
 
     stages {
-        stage('Setup RBAC') {
-            steps {
-                script {
-                    sh '''
-                    kubectl apply -f - <<EOF
-                    apiVersion: v1
-                    kind: ServiceAccount
-                    metadata:
-                      name: jenkins-agent-sa
-                      namespace: default
-                    ---
-                    apiVersion: rbac.authorization.k8s.io/v1
-                    kind: ClusterRole
-                    metadata:
-                      name: node-listing-role
-                    rules:
-                    - apiGroups: [""]
-                      resources: ["nodes"]
-                      verbs: ["get", "list", "watch"]
-                    ---
-                    apiVersion: rbac.authorization.k8s.io/v1
-                    kind: ClusterRoleBinding
-                    metadata:
-                      name: jenkins-agent-sa-cluster-admin
-                    subjects:
-                    - kind: ServiceAccount
-                      name: jenkins-agent-sa
-                      namespace: default
-                    roleRef:
-                      kind: ClusterRole
-                      name: cluster-admin
-                      apiGroup: rbac.authorization.k8s.io
-                    EOF
-                    '''
-                }
-            }
-        }
-
         stage('Test') {
             steps {
                 container('go') {
