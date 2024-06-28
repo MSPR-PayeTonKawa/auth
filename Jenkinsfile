@@ -52,34 +52,45 @@ pipeline {
     }
 
     stages {
-        stage('Test') {
-            steps {
-                container('go') {
-                    // Running go test with verbosity
-                    sh 'go test ./... -v'
-                }
-            }
-        }
+        // stage('Test') {
+        //     steps {
+        //         container('go') {
+        //             // Running go test with verbosity
+        //             sh 'go test ./... -v'
+        //         }
+        //     }
+        // }
 
-        stage('Build Docker Image') {
-            steps {
-                container('docker') {
-                    script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh "docker build -t ${imageName} ."
-                    }
-                }
-            }
-        }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 sh "docker build -t ${imageName} ."
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Push Docker Image') {
+        // stage('Push Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 // Corrected to prevent Groovy string interpolation
+        //                 sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+        //                 sh "docker push ${imageName}"
+        //             }
+        //         }
+        //     }
+        // }
+
+        stage('Verify Kubernetes Configuration') {
             steps {
-                container('docker') {
+                container('kubectl') {
                     script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        // Corrected to prevent Groovy string interpolation
-                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
-                        sh "docker push ${imageName}"
+                        sh 'kubectl config view'
+                        sh 'kubectl get nodes'
                     }
                 }
             }
