@@ -78,7 +78,7 @@ pipeline {
         stage('Apply Kubernetes Manifests') {
             steps {
                 container('kubectl') {
-                    withKubeConfig([credentialsId: 'ec2c0a90-1f2e-461e-8851-5add2c2c7b2']) {
+                    withKubeConfig([credentialsId: 'ec2c0a90-1f2e-461e-8851-5add47e2c7b2']) {
                         script {
                             // Debugging steps
                             sh 'echo "KUBECONFIG: $KUBECONFIG"'
