@@ -52,28 +52,28 @@ pipeline {
     }
 
     stages {
-        stage('Build Docker Image') {
-            steps {
-                container('docker') {
-                    script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh "docker build -t ${imageName} ."
-                    }
-                }
-            }
-        }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 sh "docker build -t ${imageName} ."
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Push Docker Image') {
-            steps {
-                container('docker') {
-                    script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
-                        sh "docker push ${imageName}"
-                    }
-                }
-            }
-        }
+        // stage('Push Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+        //                 sh "docker push ${imageName}"
+        //             }
+        //         }
+        //     }
+        // }
 
         stage('Deploy App to Kubernetes') {
             steps {
