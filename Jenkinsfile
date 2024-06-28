@@ -2,7 +2,7 @@ pipeline {
     agent {
         kubernetes {
             label 'go-docker-agent'
-            yaml """
+            yaml '''
             apiVersion: v1
             kind: Pod
             spec:
@@ -40,7 +40,7 @@ pipeline {
               - name: kubeconfig
                 configMap:
                   name: kubeconfig
-            """
+            '''
         }
     }
 
@@ -75,18 +75,11 @@ pipeline {
             }
         }
 
-        stage('Apply Kubernetes Manifests') {
+        stage('Deploy App to Kubernetes') {
             steps {
                 container('kubectl') {
-                    withKubeConfig([credentialsId: 'ec2c0a90-1f2e-461e-8851-5add47e2c7b2']) {
-                        script {
-                            // Debugging steps
-                            sh 'echo "KUBECONFIG: $KUBECONFIG"'
-                            sh 'kubectl config view'
-
-                            // Apply YAML files
-                            sh 'kubectl apply -f ./k8s'
-                        }
+                    withCredentials([file(credentialsId: 'ec2c0a90-1f2e-461e-8851-5add47e2c7b2', variable: 'KUBECONFIG')]) {
+                        sh 'kubectl apply -f ./k8s/*.yaml'
                     }
                 }
             }
