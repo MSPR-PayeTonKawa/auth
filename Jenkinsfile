@@ -23,6 +23,15 @@ pipeline {
                 - name: kubeconfig
                   mountPath: /root/.kube/config
                   subPath: config
+              - name: kubectl
+                image: bitnami/kubectl:latest
+                command:
+                - cat
+                tty: true
+                volumeMounts:
+                - name: kubeconfig
+                  mountPath: /root/.kube/config
+                  subPath: config
               serviceAccountName: jenkins-agent-sa
               volumes:
               - name: docker-sock
@@ -78,7 +87,7 @@ pipeline {
 
         stage('Apply Kubernetes Manifests') {
             steps {
-                container('docker') {
+                container('kubectl') {
                     script {
                         sh 'kubectl apply -f k8s/*.yaml'
                     }
