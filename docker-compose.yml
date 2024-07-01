@@ -3,29 +3,27 @@ services:
     container_name: db-auth
     image: postgres:latest
     env_file:
-      - .env
+      - ../auth/.env
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - "./schema.sql:/docker-entrypoint-initdb.d/init.sql"
+      - db-auth-data:/var/lib/postgresql/data
+      - "../auth/schema.sql:/docker-entrypoint-initdb.d/init.sql"
     networks:
       - payetonkawa-n
   
   auth:
     container_name: auth
     build:
-      context: .
+      context: ../auth
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - ../auth/.env
     environment:
       - ENV=production
-    ports:
-      - "8081:8080"
     networks:
       - payetonkawa-n
 
 volumes:
-  postgres_data:
+  db-auth-data:
 
 networks:
   payetonkawa-n:

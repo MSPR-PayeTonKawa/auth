@@ -23,5 +23,7 @@ WORKDIR /app
 # Copy the binary from the builder stage
 COPY --from=builder /app/app .
 
+EXPOSE 8080
+
 # Command to run the executable
 ENTRYPOINT ["./app"]
