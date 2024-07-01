@@ -18,6 +18,8 @@ func StartConsumer(brokers string, groupId string, topics []string, processMessa
 		log.Fatal("Kafka username or password not set")
 	}
 
+	log.Printf("Kafka Username: %s", username)
+
 	mechanism := plain.Mechanism{
 		Username: username,
 		Password: password,
