@@ -47,37 +47,44 @@ pipeline {
             '''
         }
     }
+    parameters {
+        string(name: 'PROJECT_PATH', defaultValue: '/home/gmn/apps/payetonkawa/auth', description: 'Path to the project directory')
+    }
     stages {
         stage('Checkout SCM') {
             steps {
                 checkout scm
             }
         }
-        stage('Debug Pod') {
+
+        stage('Build Docker Image') {
             steps {
-                container('kubectl') {
-                    sh 'echo "Current Kubernetes context:"'
-                    sh 'kubectl config current-context'
-                    sh 'echo "Current Kubernetes namespace:"'
-                    sh 'kubectl config view --minify --output "jsonpath={..namespace}"'
-                    sh 'echo "Current directory contents:"'
-                    sh 'ls -la'
-                    sh 'echo "KUBECONFIG environment variable:"'
-                    sh 'echo $KUBECONFIG'
+                container('docker') {
+                    script {
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh "docker build -t ${imageName} ."
+                    }
                 }
             }
         }
-        stage('Deploy App to Kubernetes') {
+
+        stage('Push Docker Image') {
             steps {
-                container('kubectl') {
-                    withCredentials([file(credentialsId: 'ec2c0a90-1f2e-461e-8851-5add47e2c7b2', variable: 'KUBECONFIG')]) {
-                        sh 'kubectl apply -f ./k8s/deployment.yaml'
-                        sh 'kubectl apply -f ./k8s/middleware.yaml'
-                        sh 'kubectl apply -f ./k8s/postgres-deployment.yaml'
-                        sh 'kubectl apply -f ./k8s/postgres-service.yaml'
-                        sh 'kubectl apply -f ./k8s/secrets.yaml'
-                        sh 'kubectl apply -f ./k8s/service.yaml'
+                container('docker') {
+                    script {
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+                        sh "docker push ${imageName}"
                     }
+                }
+            }
+        }
+        stage('Deploy to K8s') {
+            steps {
+                sshagent(['your-ssh-credentials-id']) {
+                    sh """
+                        ssh gmn@target-server "/home/gmn/scripts/deploy.sh ${params.PROJECT_PATH}"
+                    """
                 }
             }
         }
