@@ -10,15 +10,16 @@ import (
 	"github.com/segmentio/kafka-go/sasl/plain"
 )
 
-func StartConsumer(brokers string, groupId string, topics []string, processMessage func(kafka.Message)) {
+func StartConsumer(groupId string, topics []string, processMessage func(kafka.Message)) {
+	kafkaHost := os.Getenv("KAFKA_HOST")
 	username := os.Getenv("KAFKA_USERNAME")
 	password := os.Getenv("KAFKA_PASSWORD")
 
-	if username == "" || password == "" {
-		log.Fatal("Kafka username or password not set")
+	if kafkaHost == "" || username == "" || password == "" {
+		log.Fatal("Kafka host, username or password not set")
 	}
 
-	log.Printf("Kafka Username: %s", username)
+	log.Printf("Kafka Host: %s, Username: %s", kafkaHost, username)
 
 	mechanism := plain.Mechanism{
 		Username: username,
@@ -32,7 +33,7 @@ func StartConsumer(brokers string, groupId string, topics []string, processMessa
 	}
 
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:                []string{brokers},
+		Brokers:                []string{kafkaHost},
 		GroupID:                groupId,
 		Topic:                  topics[0],
 		MinBytes:               10e3, // 10KB
