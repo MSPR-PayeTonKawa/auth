@@ -85,7 +85,7 @@ pipeline {
             steps {
                 sshagent(['6ff897ff-0cc3-4a47-86ca-a467266a6e4b']) {
                     sh """
-                        ssh gmn@target-server "/home/gmn/scripts/deploy.sh ${params.PROJECT_PATH}"
+                        ssh gmn@176.189.118.208 "/home/gmn/scripts/deploy.sh ${params.PROJECT_PATH}"
                     """
                 }
             }
