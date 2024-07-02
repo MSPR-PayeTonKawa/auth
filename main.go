@@ -50,6 +50,13 @@ func main() {
 
 	h := handlers.NewHandler(db)
 
+	// ping endpoint created for testing purposes
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
+
 	r.POST("/login", h.Login)
 	r.POST("/refresh", h.Refresh)
 	r.POST("/verify", h.VerifyToken)
