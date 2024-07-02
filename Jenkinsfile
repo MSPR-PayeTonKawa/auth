@@ -81,7 +81,7 @@ pipeline {
         }
         stage('Deploy to K8s') {
             steps {
-                sshagent(['your-ssh-credentials-id']) {
+                sshagent(['6ff897ff-0cc3-4a47-86ca-a467266a6e4b']) {
                     sh """
                         ssh gmn@target-server "/home/gmn/scripts/deploy.sh ${params.PROJECT_PATH}"
                     """
