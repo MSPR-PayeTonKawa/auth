@@ -57,30 +57,30 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                container('docker') {
-                    script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        sh "docker build -t ${imageName} ."
-                    }
-                }
-            }
-        }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 sh "docker build -t ${imageName} ."
+        //             }
+        //         }
+        //     }
+        // }
 
-        stage('Push Docker Image') {
-            steps {
-                container('docker') {
-                    script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-                        withCredentials([usernamePassword(credentialsId: 'harbor-credentials', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
-                            sh "echo ${HARBOR_PASSWORD} | docker login registry.germainleignel.com -u ${HARBOR_USERNAME} --password-stdin"
-                            sh "docker push ${imageName}"
-                        }
-                    }
-                }
-            }
-        }
+        // stage('Push Docker Image') {
+        //     steps {
+        //         container('docker') {
+        //             script {
+        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+        //                 withCredentials([usernamePassword(credentialsId: 'harbor-credentials', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
+        //                     sh "echo ${HARBOR_PASSWORD} | docker login registry.germainleignel.com -u ${HARBOR_USERNAME} --password-stdin"
+        //                     sh "docker push ${imageName}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
         stage('Deploy to K8s') {
             steps {
                 sshagent(['6ff897ff-0cc3-4a47-86ca-a467266a6e4b']) {
