@@ -2,8 +2,7 @@ pipeline {
     agent {
         kubernetes {
             label 'go-docker-agent'
-            defaultContainer 'jnlp'
-            yaml '''
+            yaml """
             apiVersion: v1
             kind: Pod
             spec:
@@ -13,9 +12,6 @@ pipeline {
                 command:
                 - cat
                 tty: true
-                volumeMounts:
-                - name: workspace-volume
-                  mountPath: /home/jenkins/agent
               - name: docker
                 image: docker:20.10.7
                 command:
@@ -24,77 +20,66 @@ pipeline {
                 volumeMounts:
                 - name: docker-sock
                   mountPath: /var/run/docker.sock
-              - name: kubectl
-                image: bitnami/kubectl:latest
-                command:
-                - cat
-                tty: true
-                volumeMounts:
-                - name: kubeconfig
-                  mountPath: /root/.kube/config
-                  subPath: config
-                - name: workspace-volume
-                  mountPath: /home/jenkins/agent
               volumes:
               - name: docker-sock
                 hostPath:
                   path: /var/run/docker.sock
-              - name: workspace-volume
-                emptyDir: {}
-              - name: kubeconfig
-                configMap:
-                  name: kubeconfig
-            '''
+            """
         }
     }
-    parameters {
-        string(name: 'PROJECT_PATH', defaultValue: '/home/gmn/apps/payetonkawa/auth', description: 'Path to the project directory')
+
+    environment {
+        SONAR_HOST_URL = credentials('e53ab44a-35fb-41ae-80ab-dd6836a9463c') // SONAR_HOST
+        SONAR_TOKEN = credentials('9c1c3109-58e4-4890-b88f-2615d2221245') // SONAR_TOKEN
+        HARBOR_USERNAME = credentials('db2c5c66-275f-440f-a0d5-73dce0f7355e') // HARBOR_USERNAME
+        HARBOR_PASSWORD = credentials('a6c7d1c9-3c1b-4bdb-a0c5-4ca28f51c1f5') // HARBOR_PASSWORD
     }
+
     stages {
-        stage('Checkout SCM') {
+        stage('Test') {
             steps {
-                checkout scm
+                container('go') {
+                    // Running go test with verbosity
+                    sh 'go test ./... -v'
+                }
             }
         }
 
-        // stage('Build Docker Image') {
-        //     steps {
-        //         container('docker') {
-        //             script {
-        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-        //                 sh "docker build -t ${imageName} ."
-        //             }
-        //         }
-        //     }
-        // }
-
-        // stage('Push Docker Image') {
-        //     steps {
-        //         container('docker') {
-        //             script {
-        //                 def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
-        //                 withCredentials([usernamePassword(credentialsId: 'harbor-credentials', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
-        //                     sh "echo ${HARBOR_PASSWORD} | docker login registry.germainleignel.com -u ${HARBOR_USERNAME} --password-stdin"
-        //                     sh "docker push ${imageName}"
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-        stage('Deploy to K8s') {
+        stage('Build Docker Image') {
             steps {
-                sshagent(['6ff897ff-0cc3-4a47-86ca-a467266a6e4b']) {
-                    sh """
-                        ssh gmn@176.189.118.208 "/home/gmn/scripts/deploy.sh ${params.PROJECT_PATH}"
-                    """
+                container('docker') {
+                    script {
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        sh "docker build -t ${imageName} ."
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                container('docker') {
+                    script {
+                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:${env.BUILD_NUMBER}"
+                        // Corrected to prevent Groovy string interpolation
+                        sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
+                        sh "docker push ${imageName}"
+                    }
                 }
             }
         }
     }
+
     post {
         always {
-            archiveArtifacts artifacts: '**/*.yaml', allowEmptyArchive: true
-            echo 'Tests, Docker build/push, or manifest application failed.'
+            // Archive test results, logs, or any other artifacts if needed
+            archiveArtifacts artifacts: '**/test-results/*.xml', allowEmptyArchive: true
+        }
+        success {
+            echo 'Tests ran successfully and image was built and pushed.'
+        }
+        failure {
+            echo 'Tests or Docker build/push failed.'
         }
     }
 }
