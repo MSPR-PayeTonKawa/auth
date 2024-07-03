@@ -20,6 +20,11 @@ pipeline {
                 volumeMounts:
                 - name: docker-sock
                   mountPath: /var/run/docker.sock
+              - name: sonar-scanner
+                image: sonarsource/sonar-scanner-cli:latest
+                command:
+                - cat
+                tty: true
               volumes:
               - name: docker-sock
                 hostPath:
