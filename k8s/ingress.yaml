@@ -8,13 +8,13 @@ metadata:
 spec:
   tls:
     - hosts:
-        - payetonkawa.germainleignel.com
-      secretName: payetonkawa-tls
+        - auth-ptk.germainleignel.com
+      secretName: auth-ptk-tls
   rules:
-    - host: payetonkawa.germainleignel.com
+    - host: auth-ptk.germainleignel.com
       http:
         paths:
-          - path: /api/auth(/|$)(.*)
+          - path: /
             pathType: Prefix
             backend:
               service:
