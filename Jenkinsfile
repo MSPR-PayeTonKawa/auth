@@ -36,6 +36,20 @@ pipeline {
     }
 
     stages {
+        stage('SonarQube Analysis') {
+            steps {
+                container('sonar-scanner') {
+                    sh '''
+                    sonar-scanner \
+                      -Dsonar.projectKey=MSPR-PayeTonKawa_auth_7d40a8c4-4ff5-4034-acaf-0226d044b7c0 \
+                      -Dsonar.sources=. \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.login=$SONAR_TOKEN
+                    '''
+                }
+            }
+        }
+
         stage('Test') {
             steps {
                 container('go') {
