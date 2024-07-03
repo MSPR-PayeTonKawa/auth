@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: postgres-deployment
+  name: auth-database-deployment
   namespace: payetonkawa-prod
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgres
+      app: auth-database
   template:
     metadata:
       labels:
-        app: postgres
+        app: auth-database
     spec:
       containers:
-      - name: postgres
+      - name: auth-database
         image: postgres:latest
         ports:
         - containerPort: 5432
