@@ -2,7 +2,7 @@ pipeline {
     agent {
         kubernetes {
             label 'go-docker-agent'
-            yaml """
+            yaml '''
             apiVersion: v1
             kind: Pod
             spec:
@@ -24,7 +24,7 @@ pipeline {
               - name: docker-sock
                 hostPath:
                   path: /var/run/docker.sock
-            """
+            '''
         }
     }
 
@@ -49,7 +49,7 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:latest"
+                        def imageName = 'registry.germainleignel.com/paye-ton-kawa/auth:latest'
                         sh "docker build -t ${imageName} ."
                     }
                 }
@@ -60,10 +60,23 @@ pipeline {
             steps {
                 container('docker') {
                     script {
-                        def imageName = "registry.germainleignel.com/paye-ton-kawa/auth:latest"
+                        def imageName = 'registry.germainleignel.com/paye-ton-kawa/auth:latest'
                         // Corrected to prevent Groovy string interpolation
                         sh 'echo $HARBOR_PASSWORD | docker login registry.germainleignel.com --username $HARBOR_USERNAME --password-stdin'
                         sh "docker push ${imageName}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sshagent(credentials: ['6ff897ff-0cc3-4a47-86ca-a467266a6e4b']) {
+                    script {
+                        def sshCommand = 'ssh gmn@176.189.118.208 "/home/gmn/scripts/deploy.sh /home/gmn/apps/payetonkawa/auth auth-deployment payetonkawa-prod"'
+
+                        def deployOutput = sh(script: sshCommand, returnStdout: true).trim()
+                        echo "Deployment output:\n${deployOutput}"
                     }
                 }
             }
