@@ -25,7 +25,7 @@ spec:
         - name: ENV
           value: "production"
         - name: DB_HOST
-          value: "postgres-auth-service.payetonkawa-prod.svc.cluster.local"
+          value: "auth-database-service.payetonkawa-prod.svc.cluster.local"
         - name: KAFKA_HOST
           value: "kafka.payetonkawa-prod.svc.cluster.local:9092"
         - name: GIN_MODE
